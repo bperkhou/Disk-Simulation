@@ -3,6 +3,8 @@
 #include<iostream>
 #include <stdlib.h>
 #include "circle_class.h"
+#include <string>
+#include <sstream>
 
 
 
@@ -23,25 +25,37 @@ int main( int argc, char* args[] ){
 
 	
 	SDL_FillRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
+	Circle circle(30,screenSurface->h / 2, 30, 420, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	circle.render(screenSurface);
 	SDL_UpdateWindowSurface( window );
 
 	bool quit = false;
 	SDL_Event e;
 	
-	Circle placeholder(0,0,30);
+	float dt;
+	int cur = SDL_GetTicks();
+	int prev;
+	int frame_start;
+	int frame_end;
 	
+	//main loop
 	while(!quit){
+		frame_start = SDL_GetTicks();
 		while(SDL_PollEvent(&e) != 0){
-			if(e.type == SDL_MOUSEBUTTONDOWN){
-				placeholder.set_xc(e.button.x);
-				placeholder.set_yc(e.button.y);
-				placeholder.fill_disk(screenSurface, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
-				SDL_UpdateWindowSurface(window);
-			}
 			if(e.type == SDL_QUIT)
 				quit = true;
 		}
-
+		
+		prev = cur;
+		cur = SDL_GetTicks();
+		dt = (cur - prev)/(1000.f);
+		circle.move(screenSurface, dt);
+		SDL_FillRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
+		circle.render(screenSurface);
+		SDL_UpdateWindowSurface(window);
+		frame_end = SDL_GetTicks();
+		if (frame_end - frame_start < 17)
+			SDL_Delay(17 - frame_end + frame_start);
 	}
 	
 	

@@ -2,18 +2,54 @@
 #include <iostream>
 using namespace std;
 
-Circle::Circle(int x, int y, int radius){
+Circle::Circle(Uint32 pixel){
+	xc = 0;
+	yc = 0;
+	r = 0;
+	xv = 0;
+	yv = 0;
+	color = pixel;
+}
+
+Circle::Circle(float x, float y, float radius, Uint32 pixel){
 	xc = x;
 	yc = y;
 	r = radius;
+	xv = 0;
+	yv = 0;
+	color = pixel;
 }
 
-void Circle::set_xc(int x) {xc=x;}
-void Circle::set_yc(int y) {yc=y;}
-void Circle::set_r(int radius) {r=radius;}
+Circle::Circle(float x, float y, float radius, float xvel, float yvel, Uint32 pixel){
+	xc = x;
+	yc = y;
+	r = radius;
+	xv = xvel;
+	yv = yvel;
+	color = pixel;
+}
 
-void Circle::fill_disk(SDL_Surface *surface, Uint32 pixel){
-	fill_disk_backend(surface, xc, yc, r, pixel);
+
+
+void Circle::set_xc(float x) {xc=x;}
+void Circle::set_yc(float y) {yc=y;}
+void Circle::set_c(float x, float y){xc=x; yc=y;}
+void Circle::set_xv(float x) {xv=x;}
+void Circle::set_yv(float y) {yv=y;}
+void Circle::set_v(float x, float y){xv=x; yv=y;}
+void Circle::set_r(float radius) {r=radius;}
+void Circle::set_color(Uint32 pixel) {color = pixel;}
+
+void Circle::render(SDL_Surface *surface){
+	render_backend(surface, xc, yc, r, color);
+}
+
+void Circle::move(SDL_Surface *surface, float t){
+	if((xc+xv*t+r >= surface->w) || (xc+xv*t-r < 0)) xv = -xv;
+	if((yc+yv*t+r >= surface->h) || (yc+yv*t-r < 0)) yv = -yv;
+	xc += xv*t;
+	yc += yv*t;
+	
 }
 
 void Circle::set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel){
@@ -21,15 +57,11 @@ void Circle::set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel){
     *(Uint32 *)target_pixel = pixel;
 }
 
-void Circle::fill_disk_backend(SDL_Surface *surface, int xc, int yc, int r, Uint32 pixel){
-	for(int x = xc-r; x <= xc+r; x++){
-		for(int y = yc -r; y<= yc+r; y++){
-			if( (x >= 0) && (y >= 0) && (x < surface->w) && (y < surface->h) && (5*(x-xc)*(x-xc)+5*(y-yc)*(y-yc) <= 5*r*r+4*r))
+void Circle::render_backend(SDL_Surface *surface, float xc, float yc, float r, Uint32 pixel){
+	for(int x = (int)(xc-r); x <= (int)(xc+r); x++){
+		for(int y = (int)(yc -r); y <= (int)(yc+r); y++){
+			if((x >= 0) && (y >= 0) && (x < surface->w) && (y < surface->h) && (((float)x-xc)*((float)x-xc)+((float)y-yc)*((float)y-yc) <= r*r+.8*r))
 				set_pixel(surface, x, y, pixel);
 		}
 	}
 }
-
-
-
-//MESSAGE FOR GITHUB DID IT WORK?

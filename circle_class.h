@@ -6,17 +6,27 @@
 
 class Circle {
 	public:
-		Circle(int x, int y, int radius);
-		void set_xc(int x);
-		void set_yc(int y);
-		void set_r(int radius);
-		void fill_disk(SDL_Surface *surface, Uint32 pixel);
-		
+		Circle(Uint32 pixel);
+		Circle(float x, float y, float radius, Uint32 pixel);
+		Circle(float x, float y, float radius, float xvel, float yvel, Uint32 pixel);
+		void set_xc(float x);
+		void set_yc(float y);
+		void set_c(float x, float y);
+		void set_xv(float x);
+		void set_yv(float y);
+		void set_v(float x, float y);
+		void set_r(float radius);
+		void set_color(Uint32 pixel);
+		void render(SDL_Surface *surface);
+		void move(SDL_Surface *surface, float t);
 
 	private:
-		void fill_disk_backend(SDL_Surface *surface, int xc, int yc, int r, Uint32 pixel);
+		void render_backend(SDL_Surface *surface, float xc, float yc, float r, Uint32 pixel);
 		void set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel);
-		int xc;
-		int yc;
-		int r;
+		Uint32 color;
+		float xv;
+		float yv;
+		float xc;
+		float yc;
+		float r;
 };
