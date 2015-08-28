@@ -40,6 +40,12 @@ void Circle::set_v(float x, float y){xv=x; yv=y;}
 void Circle::set_r(float radius) {r=radius;}
 void Circle::set_color(Uint32 pixel) {color = pixel;}
 
+float Circle::get_xc(){return xc;}
+float Circle::get_yc(){return yc;} 
+float Circle::get_xv(){return xv;}
+float Circle::get_yv(){return yv;}
+float Circle::get_r(){return r;}
+
 void Circle::render(SDL_Surface *surface){
 	render_backend(surface, xc, yc, r, color);
 }

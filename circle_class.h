@@ -17,6 +17,13 @@ class Circle {
 		void set_v(float x, float y);
 		void set_r(float radius);
 		void set_color(Uint32 pixel);
+		
+		float get_xc();
+		float get_yc();
+		float get_xv();
+		float get_yv();
+		float get_r();
+		
 		void render(SDL_Surface *surface);
 		void move(SDL_Surface *surface, float t);
 
