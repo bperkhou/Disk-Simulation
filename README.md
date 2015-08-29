@@ -1,2 +1,2 @@
 # Disk-Simulation
-a simulation of disk
+a simulation of disks bouncing off of each other
