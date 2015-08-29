@@ -30,6 +30,8 @@ class Circle {
 	private:
 		void render_backend(SDL_Surface *surface, float xc, float yc, float r, Uint32 pixel);
 		void set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel);
+		bool resolve_collisions(SDL_Surface *surface, float t);
+		bool resolve_wall_collisions(float w, float h, float t);
 		Uint32 color;
 		float xv;
 		float yv;

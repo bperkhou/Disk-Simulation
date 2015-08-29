@@ -13,7 +13,8 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 bool init(SDL_Window** window, SDL_Surface** surface);
-void circle_collision(Circle *a, Circle *b);
+void circle_collision(Circle *a, Circle *b, float t);
+bool will_collide(Circle *a, Circle *b, float t);
 
 int main( int argc, char* args[] ){
 	SDL_Window* window = NULL;
@@ -26,10 +27,12 @@ int main( int argc, char* args[] ){
 
 	
 	SDL_FillRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
-	Circle circle1(30,screenSurface->h / 2, 30, 200, 300,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
-	Circle circle2(screenSurface->w-65,screenSurface->h / 2, 65, 420, -10,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	Circle circle1(45,screenSurface->h / 2, 45, 0, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	Circle circle2(300,screenSurface->h / 2, 45, -50, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	//Circle circle3(390,screenSurface->h / 2, 45, 0, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
 	circle1.render(screenSurface);
 	circle2.render(screenSurface);
+	//circle3.render(screenSurface);
 	SDL_UpdateWindowSurface( window );
 
 	bool quit = false;
@@ -48,16 +51,20 @@ int main( int argc, char* args[] ){
 			if(e.type == SDL_QUIT)
 				quit = true;
 		}	
-		circle_collision(&circle1, &circle2);
+		//circle_collision(&circle2, &circle3);
+		//circle_collision(&circle3, &circle1);
 		prev = cur;
 		cur = SDL_GetTicks();
 		dt = (cur - prev)/(1000.f);
+		circle_collision(&circle1, &circle2, dt);
 		
 		circle1.move(screenSurface, dt);
 		circle2.move(screenSurface, dt);
+		//circle3.move(screenSurface, dt);
 		SDL_FillRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
 		circle1.render(screenSurface);
 		circle2.render(screenSurface);
+		//circle3.render(screenSurface);
 		SDL_UpdateWindowSurface(window);
 		frame_end = SDL_GetTicks();
 		
@@ -73,7 +80,25 @@ int main( int argc, char* args[] ){
 	return 0;
 }
 
-void circle_collision(Circle *a, Circle *b){
+bool will_collide(Circle* a, Circle* b, float t){
+	float axc = a->get_xc();
+	float ayc = a->get_yc();
+	float bxc = b->get_xc();
+	float byc = b->get_yc();
+	float ar = a->get_r();
+	float br = b->get_r();
+	float axv = a->get_xv();
+	float ayv = a->get_yv();
+	float bxv = b->get_xv();
+	float byv = b->get_yv();
+
+	float dx = (axc+axv*t) - (bxc+bxv*t);
+	float dy = (ayc+ayv*t) - (byc+byv*t);
+	
+	return ((ar+br)*(ar+br) > dx*dx+dy*dy);
+}
+
+void circle_collision(Circle *a, Circle *b, float t){
 	float axc = a->get_xc();
 	float ayc = a->get_yc();
 	float bxc = b->get_xc();

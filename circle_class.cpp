@@ -50,12 +50,40 @@ void Circle::render(SDL_Surface *surface){
 	render_backend(surface, xc, yc, r, color);
 }
 
+bool Circle::resolve_collisions(SDL_Surface *surface, float t){
+	return resolve_wall_collisions((float) surface->w, (float) surface->h, t);
+}
+
+bool Circle::resolve_wall_collisions(float w, float h, float t){
+	bool check_collision = false;
+	if(xc+xv*t+r >= w){
+		xc = 2*w-2*r-xc-xv*t;
+		xv = -xv;
+		check_collision = true;
+	}
+	if(xc+xv*t-r < 0){
+		xc = 2*r-xc-xv*t;
+		xv = -xv;
+		check_collision = true;
+	}
+	if(yc+yv*t+r >= h){
+		yc = 2*h-2*r-yc-yv*t;
+		yv = -yv;
+		check_collision = true;
+	}
+	if(yc+yv*t-r < 0){
+		yc = 2*r-yc-yv*t;
+		yv = -yv;
+		check_collision = true;
+	}
+	return check_collision;
+}
+
 void Circle::move(SDL_Surface *surface, float t){
-	if((xc+xv*t+r >= surface->w) || (xc+xv*t-r < 0)) xv = -xv;
-	if((yc+yv*t+r >= surface->h) || (yc+yv*t-r < 0)) yv = -yv;
-	xc += xv*t;
-	yc += yv*t;
-	
+	if(!resolve_collisions(surface, t)){
+		xc += xv*t;
+		yc += yv*t;
+	}
 }
 
 void Circle::set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel){
