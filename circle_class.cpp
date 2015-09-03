@@ -50,11 +50,7 @@ void Circle::render(SDL_Surface *surface){
 	render_backend(surface, xc, yc, r, color);
 }
 
-bool Circle::resolve_collisions(SDL_Surface *surface, float t){
-	return resolve_wall_collisions((float) surface->w, (float) surface->h, t);
-}
-
-bool Circle::resolve_wall_collisions(float w, float h, float t){
+bool Circle::resolve_wall_xcollisions(float w, float t){
 	bool check_collision = false;
 	if(xc+xv*t+r >= w){
 		xc = 2*w-2*r-xc-xv*t;
@@ -66,6 +62,11 @@ bool Circle::resolve_wall_collisions(float w, float h, float t){
 		xv = -xv;
 		check_collision = true;
 	}
+	return check_collision;
+}
+
+bool Circle::resolve_wall_ycollisions(float h, float t){
+	bool check_collision = false;
 	if(yc+yv*t+r >= h){
 		yc = 2*h-2*r-yc-yv*t;
 		yv = -yv;
@@ -80,8 +81,10 @@ bool Circle::resolve_wall_collisions(float w, float h, float t){
 }
 
 void Circle::move(SDL_Surface *surface, float t){
-	if(!resolve_collisions(surface, t)){
+	if(!resolve_wall_xcollisions(surface->w, t)){
 		xc += xv*t;
+	}
+	if(!resolve_wall_ycollisions(surface->h, t)){
 		yc += yv*t;
 	}
 }

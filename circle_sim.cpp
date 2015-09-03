@@ -14,22 +14,23 @@ const int SCREEN_HEIGHT = 480;
 
 bool init(SDL_Window** window, SDL_Surface** surface);
 void circle_collision(Circle *a, Circle *b, float t);
-bool will_collide(Circle *a, Circle *b, float t);
+float col_time(Circle a, Circle b);
+
 
 int main( int argc, char* args[] ){
 	SDL_Window* window = NULL;
 	SDL_Surface* screenSurface = NULL;
-	
+
 	if(!init(&window, &screenSurface)){
 		printf("Failed to initialize");
 		return 1;
 	}
 
-	
+
 	SDL_FillRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
-	Circle circle1(45,screenSurface->h / 2, 45, 0, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
-	Circle circle2(300,screenSurface->h / 2, 45, -50, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
-	//Circle circle3(390,screenSurface->h / 2, 45, 0, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	Circle circle1(215,screenSurface->h/2, 45, 1000, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	Circle circle2(300,screenSurface->h/2, 45, 0, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	//Circle circle3(0, screenSurface->h/2, 45, 1000, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
 	circle1.render(screenSurface);
 	circle2.render(screenSurface);
 	//circle3.render(screenSurface);
@@ -37,13 +38,13 @@ int main( int argc, char* args[] ){
 
 	bool quit = false;
 	SDL_Event e;
-	
+
 	float dt;
 	int cur = SDL_GetTicks();
 	int prev;
 	int frame_start;
 	int frame_end;
-	
+
 	//main loop
 	while(!quit){
 		frame_start = SDL_GetTicks();
@@ -51,12 +52,12 @@ int main( int argc, char* args[] ){
 			if(e.type == SDL_QUIT)
 				quit = true;
 		}	
-		//circle_collision(&circle2, &circle3);
-		//circle_collision(&circle3, &circle1);
 		prev = cur;
 		cur = SDL_GetTicks();
 		dt = (cur - prev)/(1000.f);
 		circle_collision(&circle1, &circle2, dt);
+		//circle_collision(&circle2, &circle3, dt);
+		//circle_collision(&circle3, &circle1, dt);
 		
 		circle1.move(screenSurface, dt);
 		circle2.move(screenSurface, dt);
@@ -80,24 +81,6 @@ int main( int argc, char* args[] ){
 	return 0;
 }
 
-bool will_collide(Circle* a, Circle* b, float t){
-	float axc = a->get_xc();
-	float ayc = a->get_yc();
-	float bxc = b->get_xc();
-	float byc = b->get_yc();
-	float ar = a->get_r();
-	float br = b->get_r();
-	float axv = a->get_xv();
-	float ayv = a->get_yv();
-	float bxv = b->get_xv();
-	float byv = b->get_yv();
-
-	float dx = (axc+axv*t) - (bxc+bxv*t);
-	float dy = (ayc+ayv*t) - (byc+byv*t);
-	
-	return ((ar+br)*(ar+br) > dx*dx+dy*dy);
-}
-
 void circle_collision(Circle *a, Circle *b, float t){
 	float axc = a->get_xc();
 	float ayc = a->get_yc();
@@ -105,26 +88,51 @@ void circle_collision(Circle *a, Circle *b, float t){
 	float byc = b->get_yc();
 	float dx = axc - bxc;
 	float dy = ayc - byc;
-	float ar = a->get_r();
-	float br = b->get_r();
+
 	float axv = a->get_xv();
 	float ayv = a->get_yv();
 	float bxv = b->get_xv();
 	float byv = b->get_yv();
-	float distsq = dx*dx+dy*dy;
-	float aorient = -(axv*dx+ayv*dy);
-	float borient = bxv*dx+byv*dy;
-	if(!((aorient < 0) && (borient < 0)) && ((ar+br)*(ar+br) > distsq)){
+	float dxv = axv - bxv;
+	float dyv = ayv - byv;
 
-		float K = -(aorient + borient);
+	float ar = a->get_r();
+	float br = b->get_r();
+
+	float distsq = dx*dx+dy*dy;
+	float K = dx*dxv+dy*dyv;
+
+	//checks collisions and if distance between circles is decreasing
+	if((K < 0) && ((ar+br)*(ar+br) > distsq)){
 		K = K / distsq;
 		float ma = ar*ar;
 		float mb = br*br;
-		a->set_xv(axv-(2 * (mb / (ma + mb)) * K * dx));
-		a->set_yv(ayv-(2 * (mb / (ma + mb)) * K * dy));
-		b->set_xv(bxv+(2 * (ma / (ma + mb)) * K * dx));
-		b->set_yv(byv+(2 * (ma / (ma + mb)) * K * dy));
+		float mbovertot = mb / (ma + mb);
+		float maovertot = ma / (ma + mb);
+		a->set_xv(axv-(2 * mbovertot * K * dx));
+		a->set_yv(ayv-(2 * mbovertot * K * dy));
+		b->set_xv(bxv+(2 * maovertot * K * dx));
+		b->set_yv(byv+(2 * maovertot * K * dy));
 	}
+}
+
+float col_time(Circle* a, Circle* b){
+	float ar = a->get_r();
+	float br = b->get_r();
+	
+	float axc = a->get_xc();
+	float bxc = b->get_xc();
+	float ayc = a->get_yc();
+	float byc = b->get_yc();
+	
+	float axv = a->get_xv();
+	float bxv = b->get_xv();
+	float ayv = a->get_yv();
+	float byv = b->get_yv();
+	
+	
+
+	
 }
 
 bool init(SDL_Window** window, SDL_Surface** surface){
