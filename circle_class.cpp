@@ -3,63 +3,55 @@
 using namespace std;
 
 Circle::Circle(Uint32 pixel){
-	xc = 0;
-	yc = 0;
+	c.first = 0;
+	c.second = 0;
 	r = 0;
-	xv = 0;
-	yv = 0;
+	v.first = 0;
+	v.second = 0;
 	color = pixel;
 }
 
-Circle::Circle(float x, float y, float radius, Uint32 pixel){
-	xc = x;
-	yc = y;
+Circle::Circle(std::pair <float, float> cin, float radius, Uint32 pixel){
+	c = cin;
 	r = radius;
-	xv = 0;
-	yv = 0;
+	v.first = 0;
+	v.second = 0;
 	color = pixel;
 }
 
-Circle::Circle(float x, float y, float radius, float xvel, float yvel, Uint32 pixel){
-	xc = x;
-	yc = y;
+Circle::Circle(std::pair <float, float> cin, float radius, std::pair <float, float> vin, Uint32 pixel){
+	c = cin;
 	r = radius;
-	xv = xvel;
-	yv = yvel;
+	v = vin;
 	color = pixel;
 }
 
 
 
-void Circle::set_xc(float x) {xc=x;}
-void Circle::set_yc(float y) {yc=y;}
-void Circle::set_c(float x, float y){xc=x; yc=y;}
-void Circle::set_xv(float x) {xv=x;}
-void Circle::set_yv(float y) {yv=y;}
-void Circle::set_v(float x, float y){xv=x; yv=y;}
+
+void Circle::set_c(std::pair <float, float> cin){c=cin;}
+void Circle::set_v(std::pair <float, float> vin){v=vin;}
 void Circle::set_r(float radius) {r=radius;}
 void Circle::set_color(Uint32 pixel) {color = pixel;}
 
-float Circle::get_xc(){return xc;}
-float Circle::get_yc(){return yc;} 
-float Circle::get_xv(){return xv;}
-float Circle::get_yv(){return yv;}
+std::pair <float, float> Circle::get_c(){return c;}
+std::pair <float, float> Circle::get_v(){return v;} 
 float Circle::get_r(){return r;}
 
 void Circle::render(SDL_Surface *surface){
-	render_backend(surface, xc, yc, r, color);
+	render_backend(surface, r, color);
 }
 
 bool Circle::resolve_wall_xcollisions(float w, float t){
 	bool check_collision = false;
-	if(xc+xv*t+r >= w){
-		xc = 2*w-2*r-xc-xv*t;
-		xv = -xv;
+	if(c.first+v.first*t+r >= w){
+		c.first = 2*w-2*r-c.first-v.first*t;
+		v.first = -v.first;
 		check_collision = true;
 	}
-	if(xc+xv*t-r < 0){
-		xc = 2*r-xc-xv*t;
-		xv = -xv;
+	if(c.first+v.first*t-r < 0){
+		c.first = 2*r-c.first-v.first*t;
+		v.first = -v.first;
 		check_collision = true;
 	}
 	return check_collision;
@@ -67,14 +59,14 @@ bool Circle::resolve_wall_xcollisions(float w, float t){
 
 bool Circle::resolve_wall_ycollisions(float h, float t){
 	bool check_collision = false;
-	if(yc+yv*t+r >= h){
-		yc = 2*h-2*r-yc-yv*t;
-		yv = -yv;
+	if(c.second+v.second*t+r >= h){
+		c.second = 2*h-2*r-c.second-v.second*t;
+		v.second = -v.second;
 		check_collision = true;
 	}
-	if(yc+yv*t-r < 0){
-		yc = 2*r-yc-yv*t;
-		yv = -yv;
+	if(c.second+v.second*t-r < 0){
+		c.second = 2*r-c.second-v.second*t;
+		v.second = -v.second;
 		check_collision = true;
 	}
 	return check_collision;
@@ -82,10 +74,10 @@ bool Circle::resolve_wall_ycollisions(float h, float t){
 
 void Circle::move(SDL_Surface *surface, float t){
 	if(!resolve_wall_xcollisions(surface->w, t)){
-		xc += xv*t;
+		c.first += v.first*t;
 	}
 	if(!resolve_wall_ycollisions(surface->h, t)){
-		yc += yv*t;
+		c.second += v.second*t;
 	}
 }
 
@@ -94,10 +86,10 @@ void Circle::set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel){
     *(Uint32 *)target_pixel = pixel;
 }
 
-void Circle::render_backend(SDL_Surface *surface, float xc, float yc, float r, Uint32 pixel){
-	for(int x = (int)(xc-r); x <= (int)(xc+r); x++){
-		for(int y = (int)(yc -r); y <= (int)(yc+r); y++){
-			if((x >= 0) && (y >= 0) && (x < surface->w) && (y < surface->h) && (((float)x-xc)*((float)x-xc)+((float)y-yc)*((float)y-yc) <= r*r+.8*r))
+void Circle::render_backend(SDL_Surface *surface, float r, Uint32 pixel){
+	for(int x = (int)(c.first-r); x <= (int)(c.first+r); x++){
+		for(int y = (int)(c.second -r); y <= (int)(c.second+r); y++){
+			if((x >= 0) && (y >= 0) && (x < surface->w) && (y < surface->h) && (((float)x-c.first)*((float)x-c.first)+((float)y-c.second)*((float)y-c.second) <= r*r+.8*r))
 				set_pixel(surface, x, y, pixel);
 		}
 	}
