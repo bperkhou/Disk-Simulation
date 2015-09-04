@@ -124,14 +124,16 @@ float col_time(Circle* a, Circle* b){
 	float bxc = b->get_xc();
 	float ayc = a->get_yc();
 	float byc = b->get_yc();
+	float dx = axc - bxc;
+	float dy = ayc - byc;
 	
 	float axv = a->get_xv();
 	float bxv = b->get_xv();
 	float ayv = a->get_yv();
 	float byv = b->get_yv();
+	float dxv = axv - bxv;
+	float dyv = ayv - byv;
 	
-	
-
 	
 }
 
