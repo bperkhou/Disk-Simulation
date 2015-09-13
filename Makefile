@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = circle_sim.cpp circle_class.cpp
+OBJS = circle_sim.cpp circle_class.cpp all_disks.cpp
 
 #CC specifies which compiler we're using
 CC = g++

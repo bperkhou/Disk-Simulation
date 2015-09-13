@@ -4,8 +4,12 @@
 #include <SDL.h>
 #include <utility>
 
+#ifndef CIRCLE_CLASS
+#define CIRCLE_CLASS
+
 class Circle {
 	public:
+		Circle();
 		Circle(Uint32 pixel);
 		Circle(std::pair <float, float> cin, float radius, Uint32 pixel);
 		Circle(std::pair <float, float> cin, float radius, std::pair <float, float> vin, Uint32 pixel);
@@ -31,3 +35,5 @@ class Circle {
 		std::pair <float, float> v;
 		float r;
 };
+
+#endif /* CIRCLE_CLASS */

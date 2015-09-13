@@ -1,6 +1,7 @@
 #include "circle_class.h"
 #include <iostream>
-using namespace std;
+
+Circle::Circle(){}
 
 Circle::Circle(Uint32 pixel){
 	c.first = 0;

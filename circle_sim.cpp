@@ -3,9 +3,11 @@
 #include <iostream>
 #include <stdlib.h>
 #include "circle_class.h"
+#include "all_disks.h"
 #include <string>
 #include <sstream>
 #include <utility>
+#include <math.h>
 
 
 //Screen dimension constants
@@ -13,13 +15,14 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 bool init(SDL_Window** window, SDL_Surface** surface);
+/*
 void circle_collision(Circle *a, Circle *b, float t);
-float col_time(Circle a, Circle b);
+float col_time(Circle *a, Circle *b);
 float dot(std::pair <float, float> a, std::pair <float, float> b);
 std::pair <float, float> add(std::pair <float, float> a, std::pair <float, float> b);
 std::pair <float, float> sub(std::pair <float, float> a, std::pair <float, float> b);
 std::pair <float, float> mult(float a, std::pair <float, float> b);
-
+*/
 
 
 int main( int argc, char* args[] ){
@@ -32,19 +35,21 @@ int main( int argc, char* args[] ){
 	}
 
 
-	std::pair <float, float> c1(215,screenSurface->h/2);
-	std::pair <float, float> v1(1000, 10);
-	std::pair <float, float> c2(300,screenSurface->h/2);
-	std::pair <float, float> v2(0, 0);
+	//std::pair <float, float> c1(30,screenSurface->h/2);
+	//std::pair <float, float> v1(100, 0);
+	//std::pair <float, float> c2(screenSurface->w-30,screenSurface->h/2);
+	//std::pair <float, float> v2(0, 0);
 	
 	SDL_FillRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
-	Circle circle1(c1, 45, v1, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
-	Circle circle2(c2, 45, v2, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
-	//Circle circle3(0, screenSurface->h/2, 45, 1000, 0,SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
-	circle1.render(screenSurface);
-	circle2.render(screenSurface);
-	//circle3.render(screenSurface);
-	SDL_UpdateWindowSurface( window );
+	Disks system(2, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	system.render_all(screenSurface);
+
+	//Circle circle1(c1, 30, v1, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	//Circle circle2(c2, 30, v2, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	//circle1.render(screenSurface);
+	//circle2.render(screenSurface);
+	SDL_UpdateWindowSurface(window);
+
 
 	bool quit = false;
 	SDL_Event e;
@@ -65,17 +70,16 @@ int main( int argc, char* args[] ){
 		prev = cur;
 		cur = SDL_GetTicks();
 		dt = (cur - prev)/(1000.f);
-		circle_collision(&circle1, &circle2, dt);
-		//circle_collision(&circle2, &circle3, dt);
-		//circle_collision(&circle3, &circle1, dt);
 		
-		circle1.move(screenSurface, dt);
-		circle2.move(screenSurface, dt);
-		//circle3.move(screenSurface, dt);
+		system.update(screenSurface, dt);
 		SDL_FillRect( screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
-		circle1.render(screenSurface);
-		circle2.render(screenSurface);
-		//circle3.render(screenSurface);
+		system.render_all(screenSurface);
+		//circle_collision(&circle1, &circle2, dt);
+
+		//circle1.move(screenSurface, dt);
+		//circle2.move(screenSurface, dt);
+		//circle1.render(screenSurface);
+		//circle2.render(screenSurface);
 		SDL_UpdateWindowSurface(window);
 		frame_end = SDL_GetTicks();
 		
@@ -84,13 +88,13 @@ int main( int argc, char* args[] ){
 			SDL_Delay(17 - frame_end + frame_start);
 	}
 	
-	
 	SDL_DestroyWindow( window );
 	SDL_Quit();
 
 	return 0;
 }
 
+/*
 void circle_collision(Circle *a, Circle *b, float t){
 	std::pair <float, float> dc = sub(a->get_c(), b->get_c());
 	std::pair <float, float> dv = sub(a->get_v(), b->get_v());
@@ -112,28 +116,26 @@ void circle_collision(Circle *a, Circle *b, float t){
 		b->set_v(add(b->get_v(),mult(2*maovertot*K,dc)));
 	}
 }
-/*
+
+
+//returns -1 if circles don't collide or are tangential, otherwise time of first collision
 float col_time(Circle* a, Circle* b){
+	std::pair <float, float> dc = sub(a->get_c(), b->get_c());
+	std::pair <float, float> dv = sub(a->get_v(), b->get_v());
 	float ar = a->get_r();
 	float br = b->get_r();
 	
-	float axc = a->get_xc();
-	float bxc = b->get_xc();
-	float ayc = a->get_yc();
-	float byc = b->get_yc();
-	float dx = axc - bxc;
-	float dy = ayc - byc;
+	float cdotv = dot(dc, dv);
+	float cdistsq = dot(dc, dc);
+	float vdistsq = dot(dv, dv);
+	float rsumsq = (ar+br)*(ar+br);
 	
-	float axv = a->get_xv();
-	float bxv = b->get_xv();
-	float ayv = a->get_yv();
-	float byv = b->get_yv();
-	float dxv = axv - bxv;
-	float dyv = ayv - byv;
+	float insqrt = cdotv*cdotv-vdistsq*(cdistsq-rsumsq);
+	if(insqrt <= 0 || cdistsq < rsumsq || vdistsq == 0) return -1;
 	
-	
+	return (-sqrt(insqrt)-cdotv)/vdistsq;
 }
-*/
+
 
 float dot(std::pair <float, float> a, std::pair <float, float> b){
 	return a.first*b.first+a.second*b.second;
@@ -151,7 +153,7 @@ std::pair <float, float> mult(float a, std::pair <float, float> b){
 	std::pair <float, float> result(a*b.first, a*b.second);
 	return result;
 }
-
+*/
 
 bool init(SDL_Window** window, SDL_Surface** surface){
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ){
