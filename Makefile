@@ -1,5 +1,5 @@
 #OBJS specifies which files to compile as part of the project
-OBJS = circle_sim.cpp circle_class.cpp all_disks.cpp
+OBJS = disk_sim.cpp disk_class.cpp all_disks.cpp
 
 #CC specifies which compiler we're using
 CC = g++
@@ -19,7 +19,7 @@ LIBRARY_PATHS = -LC:\mingw_dev_lib\lib
 LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2
 
 #OBJ_NAME specifies the name of our exectuable
-OBJ_NAME = circle_sim
+OBJ_NAME = disk_sim
 
 #This is the target that compiles our executable
 all : $(OBJS)
