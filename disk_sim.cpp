@@ -40,7 +40,7 @@ int main( int argc, char* args[] ){
 	bool quit = false;
 	SDL_Event e;
 
-	float dt;
+	double dt;
 	int cur = SDL_GetTicks();
 	int prev;
 	int frame_start;
