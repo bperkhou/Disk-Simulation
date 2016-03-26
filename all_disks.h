@@ -7,7 +7,7 @@
 
 // collisions object
 // automatically stores ID1 < ID2, always preserve this
-// t_col is ALWAYS with respect to the beginning of the frame
+// t_col is an absolute measurement (from start of simulation)
 struct Col {
 	double t_col;
 	int ID1;
@@ -18,7 +18,7 @@ struct Col {
 };
 
 // for given disk: which disk it will hit first and when
-// t_col is ALWAYS with respect to the beginning of the frame
+// t_col is an absolute measurement (from start of simulation)
 struct Col_ID {
 	double t_col;
 	int ID;
@@ -37,8 +37,8 @@ class Disks {
 		void update(SDL_Surface *surface, double t_frame);
 		const double rmin = 5;
 		//rmax determined per circle to avoid overlap
-		const double vmin = 280;
-		const double vmax = 280;
+		const double vmin = 100;
+		const double vmax = 100;
 		const int SCREEN_WIDTH = 640;
 		const int SCREEN_HEIGHT = 480;
 
@@ -60,5 +60,6 @@ class Disks {
 		void update_disks_disk(Disk &a, Disk &b);
 		void update_disks(int ID1, int ID2);
 		void update_cols(int ID1, int ID2, double t_used);
+		bool invalid_col(Col col);
 		
 };

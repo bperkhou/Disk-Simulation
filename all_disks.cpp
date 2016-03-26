@@ -10,7 +10,7 @@ Disks::Disks(int num, Uint32 pixel){
 	n = num;
 	TIME = 0;
 	//srand(time(NULL));
-	srand(1);
+	srand(0);
 	disks = new Disk[n];
 	for(int i = 0; i < n; i++){
 		disks[i].set_color(pixel);
@@ -35,10 +35,10 @@ Disks::Disks(int num, Uint32 pixel){
 	//initialize collision handling
 	//keeps track of soonest collisions per disk
 	//ID of walls are n to n+3 starting at left wall and going clockwise
-	first_cols = new Col_ID[n];
-	for(int i=0; i < n; i++){
+	first_cols = new Col_ID[n+4];
+	for(int i=0; i < n+4; i++){
 		// inner loop includes walls
-		for(int j=i+1; j < n+4; j++){
+		for(int j=0; j < n+4; j++){
 			double t_col = col_time(i, j, 0);
 			//std::cout << "init: potential col in " << t_col <<
 			//	" with " << j << std::endl;
@@ -49,7 +49,7 @@ Disks::Disks(int num, Uint32 pixel){
 			if (t_col != -1) cols.emplace(Col(i, j, t_col));
 		}
 	}
-	/*
+	
 	for(int i=0; i < n; i++){
 		std::cout << "initialization: first collision of disk " <<
 			i << " with object " << first_cols[i].ID << " in " <<
@@ -59,7 +59,7 @@ Disks::Disks(int num, Uint32 pixel){
 			disks[i].get_c().second << " " << disks[i].get_v().first <<
 			" " << disks[i].get_v().second << std::endl;
 	}
-	*/
+	
 }
 
 
@@ -81,45 +81,49 @@ void Disks::update(SDL_Surface *surface, double t_frame){
 	TIME += t_frame;
 }
 
+bool Disks::invalid_col(Col col){
+	int ID1 = col.ID1;
+	int ID2 = col.ID2;
+	double t_col = col.t_col;
+	Col_ID c1 = first_cols[ID1];
+	Col_ID c2 = first_cols[ID2];
+	bool ans = (t_col == -1) || ((c1.ID != ID2 || c1.t_col != t_col) && (c2.ID != ID1 || c2.t_col != t_col));
+	/*
+	if (ans) {
+		std::cout << "discarding collision between " << ID1 << " and "
+			<< ID2 << " at time " << t_col << std::endl;
+		std::cout << "    collision of " << ID1 << " should be with " <<
+			c1.ID << " at time " << c1.t_col << std::endl;
+		std::cout << "    collision of " << ID2 << " should be with " <<
+			c2.ID << " at time " << c2.t_col << std::endl;
+	}
+	*/
+	return ans;
+}
+
 // t_used is frame time used up so far, t_frame is total frame time
 double Disks::resolve_collisions(SDL_Surface *surface, double t_frame){
 	double t_cur = TIME;
-
 	while (t_cur < TIME + t_frame){
 		Col cur = cols.top();
+		while (invalid_col(cur)){
+			cols.pop();
+			cur = cols.top();
+		}
 		double t_col = cur.t_col;
 		int ID1 = cur.ID1;
 		int ID2 = cur.ID2;
-		while ((t_col == -1) || (first_cols[ID1].ID != ID2) ||
-			((ID2 < n) && (first_cols[ID2].ID != ID1))){
-			
-			std::cout << "discarding collision between " << ID1 << " and "
-				<< ID2 << " at time " << t_col << std::endl;
-			std::cout << "    conditions: t_col = " << t_col <<
-				" collision of " << ID1 << " should be with " << first_cols[ID1].ID << std::endl;
-			if (ID2 < n){
-				std::cout << "    collision of " << ID2 << " should be with " <<
-					first_cols[ID2].ID << std::endl;
-			}
-			cols.pop();
-			cur = cols.top();
-			t_col = cur.t_col;
-			ID1 = cur.ID1;
-			ID2 = cur.ID2;
-		}
-		/*
-		std::cout << "resolving collisions: t_cur = " << t_cur << std::endl;
-		std::cout << "collision between " << ID1 << " and " << ID2 << " at time "
-			<< t_col << std::endl;
-		*/
 		if (t_col > TIME + t_frame) break;
 		cols.pop();
-		move(surface, t_col-t_cur);
-		update_disks(ID1, ID2);
-		update_cols(ID1, ID2, t_col-TIME);
+		/*
 		std::cout << "Col between " << ID1 << " and " << ID2 <<
 			" at time " << t_col << ". t_cur is " << t_cur <<
 			" and TIME is " << TIME << std::endl;
+		*/	
+		move(surface, t_col-t_cur);
+		update_disks(ID1, ID2);
+		update_cols(ID1, ID2, t_col-TIME);
+		
 		//if (t_cur == t_col) {std::cout << "t_cur == t_col" << std::endl; break;}
 		t_cur = t_col;
 	}
@@ -165,31 +169,60 @@ void Disks::update_disks_disk(Disk &a, Disk &b){
 //assumes input where ID1 is a disk
 void Disks::update_cols(int ID1, int ID2, double t_used){
 	first_cols[ID1].t_col = -1;
-	for (int i=0; i<n+4; i++){
-		if (i==ID1) continue;
-		double t_col = col_time(ID1, i, t_used);
-		if (t_col == 0) continue;
-		//std::cout << "line 150 t_col for ID1 and ID2 are " <<
-		//	t_col << " " << ID1 << " " << i << std::endl;
-		if (((t_col < first_cols[ID1].t_col) && (t_col != -1)) || (first_cols[ID1].t_col == -1)){
-				first_cols[ID1].t_col = t_col;
-				first_cols[ID1].ID = i;
-		}
-		if (t_col != -1) cols.emplace(Col(ID1, i, t_col));
-	}
-	//std::cout << "Line 156, new t_col, ID = " << first_cols[ID1].t_col <<
-	//	", " << first_cols[ID1].ID << std::endl;
-	if (ID2 >= n) return;
 	first_cols[ID2].t_col = -1;
+	double t_col1;
+	double t_col2;
 	for (int i=0; i<n+4; i++){
-		if (i==ID2) continue;
-		double t_col = col_time(ID2, i, t_used);
-		if (((t_col < first_cols[ID2].t_col) && (t_col != -1)) || (first_cols[ID2].t_col == -1)){
-				first_cols[ID2].t_col = t_col;
-				first_cols[ID2].ID = i;
+		t_col1 = (i==ID1) ? -1 : col_time(ID1, i, t_used);
+		t_col2 = (i==ID2) ? -1 : col_time(ID2, i, t_used);
+		if (first_cols[i].ID == ID1 || first_cols[i].ID == ID2) first_cols[i].ID = -1;
+		if ((t_col1 < first_cols[ID1].t_col && t_col1 != -1) || (first_cols[ID1].t_col == -1)){
+			first_cols[ID1].t_col = t_col1;
+			first_cols[ID1].ID = i;
 		}
-		if (t_col != -1) cols.push(Col(ID2, i, t_col));
+		if ((t_col2 < first_cols[ID2].t_col && t_col2 != -1) || (first_cols[ID2].t_col == -1)){
+				first_cols[ID2].t_col = t_col2;
+				first_cols[ID2].ID = i;
+			}
+		if (((t_col1 < t_col2) || (t_col2 == -1)) && t_col1 != -1){
+			if (t_col1 < first_cols[i].t_col || first_cols[i].t_col == -1 || first_cols[i].ID == ID1){
+				/*
+				std::cout << "OTHER UPDATE1: " << i << " first col with " <<
+					ID1 << " at time " << t_col1 << std::endl;
+				std::cout << "          OLD: " << " first col with " <<
+					first_cols[i].ID << " at time " << first_cols[i].t_col << std::endl;
+				std::cout << "    other col: " << "with ID = " << ID2 << " at time " << t_col2 << std::endl;
+				*/
+				first_cols[i].t_col = t_col1;
+				first_cols[i].ID = ID1;
+			}
+		} else if (((t_col2 <= t_col1) || (t_col1 == -1)) && t_col2 != -1){
+			if (t_col2 < first_cols[i].t_col || first_cols[i].t_col == -1 || first_cols[i].ID == ID2){
+			/*
+				std::cout << "OTHER UPDATE2: " << i << " first col with " <<
+					ID2 << " at time " << t_col2 << std::endl;
+				std::cout << "          OLD: " << " first col with " <<
+					first_cols[i].ID << " at time " << first_cols[i].t_col << std::endl;
+				std::cout << "    other col: " << "with ID = " << ID1 << " at time " << t_col1 << std::endl;
+				*/
+				first_cols[i].t_col = t_col2;
+				first_cols[i].ID = ID2;
+			}
+		} /*else {
+			std::cout << "  REJECTED: " << "ID1, ID2 = " << ID1 << ", " << ID2 <<
+				". t_col1, t_col2 = " << t_col1 << ", " << t_col2 << std::endl;
+			std::cout << "            i, i ID, i t_col " << i << ", " <<
+				first_cols[i].ID << ", " << first_cols[i].t_col << std::endl;
+		}*/
+		if (t_col1 != -1) cols.emplace(Col(ID1, i, t_col1));
+		if (t_col2 != -1) cols.emplace(Col(ID2, i, t_col2));
 	}
+	/*
+	std::cout << "UPDATE: " << ID1 << " first col with " <<
+		first_cols[ID1].ID << " at time " << first_cols[ID1].t_col << std::endl;
+	std::cout << "        " << ID2 << " first col with " <<
+		first_cols[ID2].ID << " at time " << first_cols[ID2].t_col << std::endl;
+		*/
 	return;
 }
 
@@ -241,6 +274,7 @@ double Disks::col_time_disk(Disk &a, Disk &b, double t_used){
 	double insqrt = cdotv*cdotv-vdistsq*(cdistsq-rsumsq);
 	if(insqrt <= 0 || cdistsq < rsumsq || vdistsq == 0) return -1;
 	double ans = (-sqrt(insqrt)-cdotv)/vdistsq;
+	if (ans < 0) return -1;
 	return ans + t_used + TIME;
 }
 
