@@ -16,6 +16,7 @@ class Disk {
 		void set_v(vec vin);
 		void set_r(double radius);
 		void set_color(Uint32 pixel);
+		void print_disk();
 		
 		vec get_c();
 		vec get_v();

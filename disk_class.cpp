@@ -83,3 +83,12 @@ void Disk::render_backend(SDL_Surface *surface, double r, Uint32 pixel){
 		}
 	}
 }
+
+void Disk::print_disk(){
+	std::cout << "                    _________________________________________" << std::endl <<
+				 "The disk stats are: |   r   |  cx   |  cy   |  vx   |  vy   |" << std::endl <<
+				 "                    -----------------------------------------" << std::endl <<
+				 "                    |" << r << "|" << c.first << "|" << c.second << "|" <<
+				 v.first << "|" << v.second << "|" << std::endl <<
+				 "                    -----------------------------------------" << std::endl;
+}

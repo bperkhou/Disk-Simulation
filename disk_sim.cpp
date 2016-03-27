@@ -31,7 +31,7 @@ int main( int argc, char* args[] ){
 	//Disk c1(vec(320, 240), 30, vec(30, 50), SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
 	
 	SDL_FillRect(screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
-	Disks system(2, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	Disks system(100, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
 	system.render_all(screenSurface);
 
 	SDL_UpdateWindowSurface(window);
