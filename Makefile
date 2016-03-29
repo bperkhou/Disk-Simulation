@@ -14,7 +14,7 @@ LIBRARY_PATHS = -LC:\mingw_dev_lib\lib
 # -w suppresses all warnings
 # -Wl,-subsystem,windows gets rid of the console window
 #COMPILER_FLAGS = -w -Wl,-subsystem,windows
-COMPILER_FLAGS = -std=c++11
+COMPILER_FLAGS = -std=c++11 -O3
 
 #LINKER_FLAGS specifies the libraries we're linking against
 LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2

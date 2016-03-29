@@ -8,6 +8,7 @@
 #include <sstream>
 #include <utility>
 #include <math.h>
+#include <cmath>
 
 
 //Screen dimension constants
@@ -15,8 +16,6 @@ const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
 bool init(SDL_Window** window, SDL_Surface** surface);
-
-
 
 int main( int argc, char* args[] ){
 	SDL_Window* window = NULL;
@@ -26,12 +25,9 @@ int main( int argc, char* args[] ){
 		printf("Failed to initialize");
 		return 1;
 	}
-
-	//how to initialize a specific Disk:
-	//Disk c1(vec(320, 240), 30, vec(30, 50), SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
 	
 	SDL_FillRect(screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ) );
-	Disks system(100, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF));
+	Disks system(300, SDL_MapRGB(screenSurface->format, 0x00, 0x00, 0xFF), SCREEN_WIDTH, SCREEN_HEIGHT);
 	system.render_all(screenSurface);
 
 	SDL_UpdateWindowSurface(window);
@@ -57,30 +53,33 @@ int main( int argc, char* args[] ){
 		cur = SDL_GetTicks();
 		dt = (cur - prev)/(1000.f);
 		
-		system.update(screenSurface, dt);
+		system.update(dt);
 		SDL_FillRect(screenSurface, NULL, SDL_MapRGB( screenSurface->format, 0xFF, 0xFF, 0xFF ));
 		system.render_all(screenSurface);
 
 		SDL_UpdateWindowSurface(window);
 		frame_end = SDL_GetTicks();
 		
-		//TODO: get rid of 17, make frames per sec constant
-		if (frame_end - frame_start < 17)
-			SDL_Delay(17 - frame_end + frame_start);
+		//standardization of frame rate below
+		const float frames_per_sec = 60;
+		const int ticks_per_frame = std::ceil(1000/60);
+		if (frame_end - frame_start < ticks_per_frame)
+			SDL_Delay(ticks_per_frame - frame_end + frame_start);
 	}
 	
-	SDL_DestroyWindow( window );
+	SDL_DestroyWindow(window);
 	SDL_Quit();
 
 	return 0;
 }
 
+//usual code for using SDL2 to make a window
 bool init(SDL_Window** window, SDL_Surface** surface){
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ){
 			printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
 			return false;
 		}
-	*window = SDL_CreateWindow( "Intellectually Delayed Disk Simulation", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+	*window = SDL_CreateWindow( "Disk Simulation", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
 	if( *window == NULL ){
 		printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
 		return false;

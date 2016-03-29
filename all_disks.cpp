@@ -9,11 +9,10 @@
 
 
 //initialize centers first, then pick random radii that don't cause intersections
-Disks::Disks(int num, Uint32 pixel){
-	n = num;
-	TIME = 0;
+Disks::Disks(int num, Uint32 pixel, int screen_width, int screen_height) :
+	SCREEN_WIDTH(screen_width), SCREEN_HEIGHT(screen_height), n(num), TIME(0) {
+
 	srand(time(NULL));
-	//srand(0); //for debugging
 	disks = new Disk[n];
 	for(int i = 0; i < n; i++){
 		disks[i].set_color(pixel);
@@ -44,19 +43,9 @@ Disks::Disks(int num, Uint32 pixel){
 		// inner loop includes walls
 		for(int j=0; j < n+4; j++){
 			double t_col = col_time(i, j, 0);
-			//std::cout << "init: potential col in " << t_col <<
-			//	" with " << j << std::endl;
 			if (t_col != -1) cols.emplace(Col(i, j, t_col));
 		}
 	}
-	/*
-	for(int i=0; i < n; i++){
-		std::cout << "init: disk i radius cx cy vx vy " << i << " " <<
-			disks[i].get_r() << " " << disks[i].get_c().first << " " <<
-			disks[i].get_c().second << " " << disks[i].get_v().first <<
-			" " << disks[i].get_v().second << std::endl;
-	}
-	*/
 }
 
 
@@ -71,40 +60,27 @@ void Disks::render_all(SDL_Surface *surface){
 }
 
 //t_frame is frame time limit
-void Disks::update(SDL_Surface *surface, double t_frame){
-	double t_remain = TIME + t_frame - resolve_collisions(surface, t_frame);
-	move(surface, t_remain);
+void Disks::update(double t_frame){
+	double t_remain = TIME + t_frame - resolve_collisions(t_frame);
+	move(t_remain);
 	TIME += t_frame;
 }
 
-bool Disks::invalid_col(Col col, double t_used){
+bool Disks::invalid_col(Col col, double t_cur){
 	int ID1 = col.ID1;
 	int ID2 = col.ID2;
 	double t_col = col.t_col;
-	
-	bool ans = (t_col == -1) || (std::abs(t_col - col_time(ID1, ID2, t_used)) > 1e-6);
-	/*
-	if (ans) {
-		std::cout << "discarding collision between " << ID1 << " and "
-			<< ID2 << " at time " << t_col << std::endl;
-		std::cout << "    correct time of collision is " << col_time(ID1, ID2, t_used)
-			<< " std::abs err is " << std::abs(t_col - col_time(ID1, ID2, t_used)) << std::endl;
-	} else {
-		std::cout << "keeping collision between " << ID1 << " and "
-			<< ID2 << " at time " << t_col << std::endl;
-		std::cout << "    correct time of collision is " << col_time(ID1, ID2, t_used)
-			<< " std::abs err is " << std::abs(t_col - col_time(ID1, ID2, t_used)) << std::endl;
-	}
-	*/
-	 return ans;
+	//experimentally determined that rare instances of about 1e-7 error
+	//are indeed collisions
+	double error = 1e-6;
+	return (t_col == -1) || (std::abs(t_col - col_time(ID1, ID2, t_cur)) > error);
 }
 
-// t_used is frame time used up so far, t_frame is total frame time
-double Disks::resolve_collisions(SDL_Surface *surface, double t_frame){
+double Disks::resolve_collisions(double t_frame){
 	double t_cur = TIME;
 	while (t_cur < TIME + t_frame){
 		Col cur = cols.top();
-		while (invalid_col(cur, t_cur-TIME)){
+		while (invalid_col(cur, t_cur)){
 			cols.pop();
 			cur = cols.top();
 		}
@@ -113,25 +89,11 @@ double Disks::resolve_collisions(SDL_Surface *surface, double t_frame){
 		int ID2 = cur.ID2;
 		if (t_col > TIME + t_frame) break;
 		cols.pop();
-		/*
-		std::cout << "Col between " << ID1 << " and " << ID2 <<
-			" at time " << t_col << ". t_cur is " << t_cur <<
-			" and TIME is " << TIME << std::endl;
-		
-		std::cout << "  recomputed col time is " << col_time(ID1, ID2, t_cur-TIME) << std::endl;
-		*/
-		
-		move(surface, t_col-t_cur);
-		/*
-		if (ID1 < n) disks[ID1].print_disk();
-		if (ID2 < n) disks[ID2].print_disk();
-		*/
+		move(t_col-t_cur);
 		update_disks(ID1, ID2);
-		update_cols(ID1, ID2, t_col-TIME);
-		
+		update_cols(ID1, ID2, t_col);
 		t_cur = t_col;
 	}
-	
 	return t_cur;
 }
 
@@ -171,12 +133,12 @@ void Disks::update_disks_disk(Disk &a, Disk &b){
 }
 
 //assumes input where ID1 is a disk
-void Disks::update_cols(int ID1, int ID2, double t_used){
+void Disks::update_cols(int ID1, int ID2, double t_cur){
 	double t_col1;
 	double t_col2;
 	for (int i=0; i<n+4; i++){
-		t_col1 = (i==ID1) ? -1 : col_time(ID1, i, t_used);
-		t_col2 = (i==ID2) ? -1 : col_time(ID2, i, t_used);
+		t_col1 = (i==ID1) ? -1 : col_time(ID1, i, t_cur);
+		t_col2 = (i==ID2) ? -1 : col_time(ID2, i, t_cur);
 		if (t_col1 != -1) cols.emplace(Col(ID1, i, t_col1));
 		if (t_col2 != -1) cols.emplace(Col(ID2, i, t_col2));
 	}
@@ -185,20 +147,19 @@ void Disks::update_cols(int ID1, int ID2, double t_used){
 
 //returns -1 if Disks don't collide or are tangential, otherwise time of first collision
 // input is ID of colliding objects (can be disk to wall).
-// t_used is how much time has passed in the frame
-double Disks::col_time(int ID1, int ID2, double t_used){
+double Disks::col_time(int ID1, int ID2, double t_cur){
 	if (ID1 > ID2){
 		int temp = ID1;
 		ID1 = ID2;
 		ID2 = temp;
 	}
-	// wall on wall makes no sense, so we return -1?
+
 	if ((ID1 >= n) && (ID2 >= n)) return -1;
 	if ((ID1 < n) && (ID2 < n)){
 		Disk a = disks[ID1];
 		Disk b = disks[ID2];
 		
-		return col_time_disk(a, b, t_used);
+		return col_time_disk(a, b, t_cur);
 	}
 	Disk a = disks[ID1];
 	double r = a.get_r();
@@ -213,11 +174,11 @@ double Disks::col_time(int ID1, int ID2, double t_used){
 	else if ((ID2 == n+2) && (vx > 0)) ans = (SCREEN_WIDTH-r-cx)/vx;
 	else if ((ID2 == n+3) && (vy > 0)) ans = (SCREEN_HEIGHT-r-cy)/vy;
 	
-	return (ans >= 0) ? ans+t_used+TIME : -1;
+	return (ans >= 0) ? ans+t_cur : -1;
 }
 
 
-double Disks::col_time_disk(Disk &a, Disk &b, double t_used){
+double Disks::col_time_disk(Disk &a, Disk &b, double t_cur){
 	vec dc = sub(a.get_c(), b.get_c());
 	vec dv = sub(a.get_v(), b.get_v());
 	double ar = a.get_r();
@@ -232,31 +193,18 @@ double Disks::col_time_disk(Disk &a, Disk &b, double t_used){
 	if(insqrt <= 0 || cdistsq < rsumsq || vdistsq == 0) return -1;
 	double ans = (-sqrt(insqrt)-cdotv)/vdistsq;
 	if (ans < 0) return -1;
-	return ans + t_used + TIME;
+	return ans + t_cur;
 }
 
 
-void Disks::move(SDL_Surface *surface, double t){
+void Disks::move(double t){
 	for(int i = 0; i < n; i++){
-		disks[i].move(surface, t);
+		disks[i].move(t);
 	}
 }
 
 //Vector operations below
-
-double Disks::dot(vec a, vec b){
-	return a.first*b.first+a.second*b.second;
-}
-vec Disks::add(vec a, vec b){
-	vec result(a.first+b.first, a.second+b.second);
-	return result;
-}
-vec Disks::sub(vec a, vec b){
-	vec result(a.first-b.first, a.second-b.second);
-	return result;
-}
-
-vec Disks::mult(double a, vec b){
-	vec result(a*b.first, a*b.second);
-	return result;
-}
+double Disks::dot(vec a, vec b){return a.first*b.first+a.second*b.second;}
+vec Disks::add(vec a, vec b){return vec(a.first+b.first, a.second+b.second);}
+vec Disks::sub(vec a, vec b){return vec(a.first-b.first, a.second-b.second);}
+vec Disks::mult(double a, vec b){return vec(a*b.first, a*b.second);}

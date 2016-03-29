@@ -14,10 +14,6 @@ Disk::Disk(vec c, double r, Uint32 pixel) :
 Disk::Disk(vec c, double r, vec v, Uint32 pixel) :
  c(c), r(r), v(v), color(pixel) {}
 
-
-
-
-
 void Disk::set_c(vec cin){c=cin;}
 void Disk::set_v(vec vin){v=vin;}
 void Disk::set_r(double radius) {r=radius;}
@@ -31,43 +27,9 @@ void Disk::render(SDL_Surface *surface){
 	render_backend(surface, r, color);
 }
 
-bool Disk::resolve_wall_xcollisions(double w, double t){
-	bool check_collision = false;
-	if(c.first+v.first*t+r >= w){
-		c.first = 2*w-2*r-c.first-v.first*t;
-		v.first = -v.first;
-		check_collision = true;
-	}
-	if(c.first+v.first*t-r < 0){
-		c.first = 2*r-c.first-v.first*t;
-		v.first = -v.first;
-		check_collision = true;
-	}
-	return check_collision;
-}
-
-bool Disk::resolve_wall_ycollisions(double h, double t){
-	bool check_collision = false;
-	if(c.second+v.second*t+r >= h){
-		c.second = 2*h-2*r-c.second-v.second*t;
-		v.second = -v.second;
-		check_collision = true;
-	}
-	if(c.second+v.second*t-r < 0){
-		c.second = 2*r-c.second-v.second*t;
-		v.second = -v.second;
-		check_collision = true;
-	}
-	return check_collision;
-}
-
-void Disk::move(SDL_Surface *surface, double t){
-	//if(!resolve_wall_xcollisions(surface->w, t)){
-		c.first += v.first*t;
-	//}
-	//if(!resolve_wall_ycollisions(surface->h, t)){
-		c.second += v.second*t;
-	//}
+void Disk::move(double t){
+	c.first += v.first*t;
+	c.second += v.second*t;
 }
 
 void Disk::set_pixel(SDL_Surface *surface, int x, int y, Uint32 pixel){
